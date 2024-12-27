@@ -1,75 +1,83 @@
 import json
 import matplotlib.pyplot as plt
 
-# Path to the metrics.json file
-metrics_path = "../output/M4/metrics.json"
-
-# Initialize dictionaries to store unique metrics
-training_data = {}
-validation_data = {}
-
-# Read the JSON file and extract relevant metrics
+# Load the metrics from the JSON file
+metrics_path = "../output/M4/metrics.json"  # Path to the metrics file
+metrics = []
 with open(metrics_path, "r") as f:
     for line in f:
-        data = json.loads(line)
-        iteration = data.get("iteration", None)
-        if iteration is not None:
-            # Store training metrics by iteration (overwrite duplicates)
-            training_data[iteration] = {
-                "total_loss": data.get("total_loss", None),
-                "accuracy": data.get("mask_rcnn/accuracy", None),
-            }
-            # Store validation metrics only when available
-            if "bbox/AP" in data:
-                validation_data[iteration] = {
-                    "AP": data["bbox/AP"],
-                    "AP50": data["bbox/AP50"],
-                    "AP75": data["bbox/AP75"],
-                }
+        metrics.append(json.loads(line))
 
-# Extract sorted training metrics
-iterations = sorted(training_data.keys())
-training_loss = [training_data[i]["total_loss"] for i in iterations]
-training_accuracy = [training_data[i]["accuracy"] for i in iterations]
+# Initialize data containers for metrics
+iterations = []
+train_loss = []
+mask_rcnn_accuracy = []
+bbox_iterations = []
+bbox_ap = []
+bbox_ap50 = []
+bbox_ap75 = []
+segm_iterations = []
+segm_ap = []
+segm_ap50 = []
+segm_ap75 = []
 
-# Extract sorted validation metrics
-validation_iterations = sorted(validation_data.keys())
-validation_AP = [validation_data[i]["AP"] for i in validation_iterations]
-validation_AP50 = [validation_data[i]["AP50"] for i in validation_iterations]
-validation_AP75 = [validation_data[i]["AP75"] for i in validation_iterations]
+# Extract metrics from the JSON entries
+for entry in metrics:
+    # Collect iteration count
+    if "iteration" in entry:
+        iterations.append(entry["iteration"])
+    # Collect training loss
+    if "total_loss" in entry:
+        train_loss.append(entry["total_loss"])
+    # Collect Mask RCNN accuracy
+    if "mask_rcnn/accuracy" in entry:
+        mask_rcnn_accuracy.append(entry["mask_rcnn/accuracy"])
+    # Collect bounding box metrics
+    if "bbox/AP" in entry:
+        bbox_iterations.append(entry["iteration"])
+        bbox_ap.append(entry["bbox/AP"])
+        bbox_ap50.append(entry["bbox/AP50"])
+        bbox_ap75.append(entry["bbox/AP75"])
+    # Collect segmentation metrics
+    if "segm/AP" in entry:
+        segm_iterations.append(entry["iteration"])
+        segm_ap.append(entry["segm/AP"])
+        segm_ap50.append(entry["segm/AP50"])
+        segm_ap75.append(entry["segm/AP75"])
 
-# Get Final AP Evaluation
-if validation_iterations:
-    final_iteration = validation_iterations[-1]
-    final_AP = validation_AP[-1]
-    final_AP50 = validation_AP50[-1]
-    final_AP75 = validation_AP75[-1]
-    print(f"Final AP Evaluation at Iteration {final_iteration}:")
-    print(f"  AP (IoU=0.50:0.95): {final_AP:.3f}")
-    print(f"  AP (IoU=0.50): {final_AP50:.3f}")
-    print(f"  AP (IoU=0.75): {final_AP75:.3f}")
-
-# Plot Training Metrics (Loss and Accuracy) on the Same Plot
+# Plot training loss and Mask RCNN accuracy
 plt.figure(figsize=(10, 6))
-plt.plot(iterations, training_loss, label="Training Loss", color="blue")
-plt.plot(iterations, training_accuracy, label="Training Accuracy", color="green")
+plt.plot(iterations[:len(train_loss)], train_loss, label="Total Loss")
+plt.plot(iterations[:len(mask_rcnn_accuracy)], mask_rcnn_accuracy, label="Mask RCNN Accuracy")
 plt.xlabel("Iterations")
 plt.ylabel("Metrics")
-plt.title("Training Loss and Accuracy")
+plt.title("Training Loss and Mask Accuracy")
 plt.legend()
-plt.grid(True)
-plt.tight_layout()
+plt.grid()
 plt.show()
 
-# Plot Validation Metrics (AP)
+# Plot bounding box Average Precision (AP) metrics
 plt.figure(figsize=(10, 6))
-plt.plot(validation_iterations, validation_AP, label="AP @ IoU=0.50:0.95", color="orange")
-plt.plot(validation_iterations, validation_AP50, label="AP @ IoU=0.50", color="red")
-plt.plot(validation_iterations, validation_AP75, label="AP @ IoU=0.75", color="purple")
+plt.plot(bbox_iterations, bbox_ap, label="BBox AP")
+plt.plot(bbox_iterations, bbox_ap50, label="BBox AP50")
+plt.plot(bbox_iterations, bbox_ap75, label="BBox AP75")
 plt.xlabel("Iterations")
-plt.ylabel("Average Precision (AP)")
-plt.title("Validation Average Precision (AP)")
+plt.ylabel("Bounding Box AP Metrics")
+plt.title("Bounding Box AP Metrics")
+plt.ylim(0, 100)  # Set y-axis range from 0 to 100
 plt.legend()
-plt.grid(True)
-plt.tight_layout()
+plt.grid()
+plt.show()
+
+# Plot segmentation Average Precision (AP) metrics
+plt.figure(figsize=(10, 6))
+plt.plot(segm_iterations, segm_ap, label="Segm AP")
+plt.plot(segm_iterations, segm_ap50, label="Segm AP50")
+plt.plot(segm_iterations, segm_ap75, label="Segm AP75")
+plt.xlabel("Iterations")
+plt.ylabel("Segmentation AP Metrics")
+plt.title("Segmentation AP Metrics")
+plt.ylim(0, 100)  # Set y-axis range from 0 to 100
+plt.legend()
+plt.grid()
 plt.show()
