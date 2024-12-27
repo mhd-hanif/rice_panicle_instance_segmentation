@@ -1,0 +1,2 @@
+Please download the datasets from [this link](https://drive.google.com/drive/folders/1YdZE4nLoY9pw7kZU8QaJJ4EPuR8n_HMo?usp=sharing).
+Then, extract and place the `wheat_head_dataset` and `rice_panicle_dataset` folders inside the `dataset` folder in this repository.
